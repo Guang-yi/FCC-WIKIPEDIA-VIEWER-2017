@@ -1,0 +1,104 @@
+class WikiViewer extends React.Component{
+  constructor(props){
+    super(props);
+  }
+  
+  render(){
+    return(
+      <div>
+        <a href ="https://en.wikipedia.org/wiki/Special:Random" target="_blank">Click Here for a Random Article</a>
+        <SearchBar></SearchBar>
+      </div>
+    );
+  }
+}
+
+class SearchBar extends React.Component{
+  constructor(props){
+    super(props);
+    //m
+    this.styleclass = {active: 'active'};
+    
+    this.state = {formValue: '',
+                 currentClasses: '',
+                 articleData: ''};
+    this.handleChange = this.handleChange.bind(this);
+    this.handleClick = this.handleClick.bind(this);
+    this.handleQuery = this.handleQuery.bind(this);
+  }
+  
+  handleClick(e){
+    // console.log(this.styleclass.active);  
+  }
+  
+  handleChange(e){
+    //set state to form value
+    this.setState({formValue: e.target.value});
+  }
+  
+  handleQuery(e){
+    //on Submit, query wikipedia entry
+    e.preventDefault();
+    this.queryWikipedia(this.state.formValue);
+    this.setState({formValue: ''});
+  }
+  
+  queryWikipedia(keyword){
+    //replace keyword spaces with + symbols
+    keyword = keyword.replace(/ /g,'+');
+    
+   $.ajax({
+      context: this,
+      url:'https://en.wikipedia.org/w/api.php?action=query&format=json&list=search&titles=&srsearch=' + keyword,
+      dataType: 'jsonp',
+      success: function(response){
+        this.setState({articleData: response.query.search});
+      }
+    }); 
+  }
+  
+  render(){
+    return(
+      <div>
+        <form onSubmit={this.handleQuery}>
+          <input onClick={this.handleClick} onChange={this.handleChange} type="text" placeholder="Search..." value={this.state.formValue}/>
+        </form>
+        <ArticleList articleData={this.state.articleData}/>
+      </div>
+    );
+  }
+}
+
+class ArticleList extends React.Component{
+  constructor(props){
+    super(props);
+    this.state = {
+      listItems: ''
+    }
+  }
+  
+  componentWillReceiveProps(nextProps){
+    if(nextProps.articleData){
+      
+      var items = nextProps.articleData.map((article) => 
+        <li key={article.title}>
+          <h2>{article.title}</h2>
+          <p>{article.snippet}</p>
+        </li>
+      );
+                                            
+      this.setState({listItems: items});        
+    }
+  }
+  
+  
+  render(){
+    return(
+      <ul>{this.state.listItems}</ul>
+    );
+  }
+}
+ReactDOM.render(
+  <WikiViewer/>,
+  document.getElementById('container')
+);
